@@ -46,8 +46,7 @@ def fetch_hcons():
 	# filter hcons
 	print( 'Filtering hcons!' )
 
-	hcons_current_peak = { }
-	hcons_current_peak_cons = 0
+	hcons_current_peak = { 'peak_value': 0 }
 	hcons_peaks = [ ]
 	hcons_filtered = [ ]
 
@@ -55,30 +54,49 @@ def fetch_hcons():
 	HCONS_PEAK_THRESHOLD = 320
 
 	for h in hcons:
-		measure_cons = int( h[ 'measure_cons' ] )
+		measure_cons = float( h[ 'measure_cons' ] )
+		timestamp = h[ 'timestamp' ]
 		
 		# > 50w
 		if measure_cons > HCONS_MIN_THRESHOLD:
-			hcons_filtered.append( h )
+			hcons_filtered.append( h.copy() )
 
 		else:
-			
 			# nada
 			pass
 
-		# detect charging peak
+		# detect charging
 		if measure_cons > HCONS_PEAK_THRESHOLD:
 
-			if measure_cons > hcons_current_peak_cons:
-				hcons_current_peak = h
-				hcons_current_peak_cons = int( hcons_current_peak[ 'measure_cons' ] )		
+			# new charging period?
+			if hcons_current_peak[ 'peak_value' ] == 0:
+
+				# yes, new charging period
+				hcons_current_peak[ 'peak_value' ] = measure_cons
+				hcons_current_peak[ 'begin_time' ] = timestamp
+
+			else:
+
+				# nope, same charging period
+				# if bigger value, update it
+				if measure_cons > hcons_current_peak[ 'peak_value' ]:
+					hcons_current_peak[ 'peak_value' ] = measure_cons
+					hcons_current_peak[ 'peak_time' ] = timestamp
 
 		else:
 
-			if hcons_current_peak_cons > 0:
+			# been in a charging period before?
+			if hcons_current_peak[ 'peak_value' ] > 0:
+
+				# yes, store end timestamp
+				hcons_current_peak[ 'end_time' ] = timestamp
 				hcons_peaks.append( hcons_current_peak )
-				hcons_current_peak_cons = 0
-				hcons_current_peak = { }							
+				hcons_current_peak = { 'peak_value' : 0 }
+
+			else:
+
+				#nope, does nothing
+				pass							
 
 	print( 'Hcons filtered!' )
 
@@ -100,9 +118,9 @@ def fetch_hcons():
 	CSV_FILENAME = 'hcons_exported_peak.csv'
 	with open( CSV_FILENAME, mode = 'w' ) as csv_file:
 	    csv_writer = csv.writer( csv_file, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL )
-	    csv_writer.writerow( [ 'timestamp', 'measure_cons' ] )
+	    csv_writer.writerow( [ 'begin_time', 'end_time', 'peak_time', 'peak_value' ] )
 	    for h in hcons_peaks:
-	    	csv_writer.writerow( [ h[ 'timestamp' ], h[ 'measure_cons'] ] )
+	    	csv_writer.writerow( [ h[ 'begin_time' ], h[ 'end_time' ], h[ 'peak_time' ], h[ 'peak_value' ] ] )
 
 	print( 'Peak hcons exported!' )    	
 
