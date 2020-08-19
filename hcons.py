@@ -1,6 +1,7 @@
 import requests
 import csv
 import json
+from datetime import datetime
 
 BASE_URL = 'https://smile.prsma.com/tukxi/api/'
 
@@ -98,30 +99,49 @@ def fetch_hcons():
 				#nope, does nothing
 				pass							
 
-	print( 'Hcons filtered!' )
+	print( 'Hcons filtered!' ) 
+
+	export_hcons_filtered( hcons_filtered )
+	export_hcons_peaks( hcons_peaks )
+
+def export_hcons_filtered(hcons_filtered):
 
 	# exporting filtered hcons
 	print( 'Exporting filtered hcons!' )
 
 	CSV_FILENAME = 'hcons_exported_filtered.csv'
 	with open( CSV_FILENAME, mode = 'w' ) as csv_file:
+
 	    csv_writer = csv.writer( csv_file, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL )
 	    csv_writer.writerow( [ 'timestamp', 'measure_cons' ] )
+
 	    for h in hcons_filtered:
 	    	csv_writer.writerow( [ h[ 'timestamp' ], h[ 'measure_cons'] ] )
 
-	print( 'Filtered Hhcons exported!' )    	
+	print( 'Filtered Hhcons exported!' )    
+
+def export_hcons_peaks(hcons_peaks):	
 
 	# exporting peak hcons
 	print( 'Exporting peak hcons!' )
 
 	CSV_FILENAME = 'hcons_exported_peak.csv'
 	with open( CSV_FILENAME, mode = 'w' ) as csv_file:
-	    csv_writer = csv.writer( csv_file, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL )
-	    csv_writer.writerow( [ 'begin_time', 'end_time', 'peak_time', 'peak_value' ] )
-	    for h in hcons_peaks:
-	    	csv_writer.writerow( [ h[ 'begin_time' ], h[ 'end_time' ], h[ 'peak_time' ], h[ 'peak_value' ] ] )
 
-	print( 'Peak hcons exported!' )    	
+	    csv_writer = csv.writer( csv_file, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL )
+	    csv_writer.writerow( [ 'id', 'begin_time', 'end_time', 'duration', 'peak_time', 'peak_value' ] )
+
+	    for index, h in enumerate( hcons_peaks ):
+	    	duration = calculate_tstamp_duration( h[ 'begin_time' ], h[ 'end_time' ] )
+	    	csv_writer.writerow( [ index, h[ 'begin_time' ], h[ 'end_time' ], duration, h[ 'peak_time' ], h[ 'peak_value' ] ] )
+
+	print( 'Peak hcons exported!' )   
+
+def calculate_tstamp_duration(begin_time, end_time):
+	fmt = '%Y-%m-%dT%H:%M:%S.000Z'
+	begin_t = datetime.strptime( begin_time, fmt )
+	end_t = datetime.strptime( end_time, fmt )
+	dur_minutes = int( round( abs( (begin_t - end_t).total_seconds() ) / 60) )
+	return dur_minutes
 
 fetch_hcons()
