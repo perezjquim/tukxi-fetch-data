@@ -129,7 +129,7 @@ def export_hcons_peaks(hcons_peaks):
 	with open( CSV_FILENAME, mode = 'w' ) as csv_file:
 
 	    csv_writer = csv.writer( csv_file, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL )
-	    csv_writer.writerow( [ 'id', 'begin_time', 'end_time', 'duration', 'peak_time', 'peak_value' ] )
+	    csv_writer.writerow( [ 'id', 'begin_time', 'end_time', 'duration (minutes)', 'peak_time', 'peak_value' ] )
 
 	    for index, h in enumerate( hcons_peaks ):
 	    	duration = calculate_tstamp_duration( h[ 'begin_time' ], h[ 'end_time' ] )
